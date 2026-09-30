@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบบันทึกข้อความ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 8px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #status { color: #666; margin-left: 10px; }
+    .item { border-bottom: 1px solid #ddd; padding: 10px 0; }
+    .time { color: #888; font-size: 12px; }
+    .text { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>บันทึกข้อความ</h2>
+
+  <textarea id="text" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+  <button id="saveBtn">บันทึก</button>
+  <span id="status"></span>
+
+  <h3>รายการทั้งหมด</h3>
+  <div id="list">กำลังโหลด...</div>
+
+  <script>
+    // ใส่ Web app URL จากขั้นที่ 3 ตรงนี้ (ระหว่างเครื่องหมายคำพูด)
+    const API = 'https://script.google.com/macros/s/AKfycby2EzKBof1Gqdmtlotc1fEPqaobo-lCXudur0AiA4UPlL4EnDjCteh1EXqkGhQWd8E3sA/exec';
+
+    const textBox = document.getElementById('text');
+    const saveBtn = document.getElementById('saveBtn');
+    const statusEl = document.getElementById('status');
+    const listEl = document.getElementById('list');
+
+    // ดึงข้อมูลจาก Sheet มาแสดง
+    async function loadData() {
+      try {
+        const res = await fetch(API);
+        const data = await res.json();
+        listEl.innerHTML = '';
+
+        if (data.length === 0) {
+          listEl.textContent = 'ยังไม่มีข้อมูล';
+          return;
+        }
+
+        data.reverse().forEach(r => {
+          const item = document.createElement('div');
+          item.className = 'item';
+
+          const time = document.createElement('div');
+          time.className = 'time';
+          time.textContent = new Date(r.time).toLocaleString('th-TH');
+
+          const text = document.createElement('div');
+          text.className = 'text';
+          text.textContent = r.text;
+
+          item.append(time, text);
+          listEl.appendChild(item);
+        });
+      } catch (err) {
+        listEl.textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + err.message;
+      }
+    }
+
+    // ส่งข้อความไปบันทึกลง Sheet
+    async function saveData() {
+      const text = textBox.value.trim();
+      if (!text) {
+        alert('กรุณาพิมพ์ข้อความก่อน');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      statusEl.textContent = 'กำลังบันทึก...';
+
+      try {
+        await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ text: text })
+        });
+        textBox.value = '';
+        statusEl.textContent = 'บันทึกแล้ว ✓';
+        await loadData();
+      } catch (err) {
+        statusEl.textContent = 'บันทึกไม่สำเร็จ: ' + err.message;
+      }
+
+      saveBtn.disabled = false;
+    }
+
+    saveBtn.addEventListener('click', saveData);
+    loadData(); // โหลดข้อมูลทันทีที่เปิดหน้าเว็บ
+  </script>
+</body>
+</html>
