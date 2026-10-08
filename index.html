@@ -1,115 +1,293 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบบันทึกข้อความ</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 30px auto;
-      padding: 0 15px;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      padding: 8px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #status { color: #666; margin-left: 10px; }
-    .item { border-bottom: 1px solid #ddd; padding: 10px 0; }
-    .time { color: #888; font-size: 12px; }
-    .text { white-space: pre-wrap; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#0f3d3e">
+<meta name="referrer" content="no-referrer">
+<title>CMTabSystem</title>
+<style>
+:root{--bg:#f3f6f5;--card:#fff;--ink:#14282a;--mut:#5d7274;--pri:#0f3d3e;--acc:#e8a317;--line:#d5e0de;--err:#b3261e}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1a1b;--card:#15292a;--ink:#e6f0ee;--mut:#8fa8a6;--pri:#3ba99c;--acc:#f0b73a;--line:#264041;--err:#ff8a80}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:16px/1.5 system-ui,-apple-system,"Noto Sans Thai","Sarabun",sans-serif;background:var(--bg);color:var(--ink);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#bar{position:fixed;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,var(--acc),transparent) no-repeat;background-size:50% 100%;animation:slide 1s linear infinite;opacity:0;transition:opacity .15s;z-index:9;pointer-events:none}
+#bar.on{opacity:1}
+@keyframes slide{from{background-position:-50% 0}to{background-position:150% 0}}
+header{position:sticky;top:0;background:var(--pri);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:8px;z-index:2}
+@media(prefers-color-scheme:dark){header{color:#06201d}}
+header div{flex:1;line-height:1.2}
+header h1{font-size:19px;margin:0}
+header span{font-size:12px;opacity:.85}
+main{padding:12px 16px 90px;max-width:640px;margin:auto}
+.hide{display:none!important}
+input,textarea,select,button{font:inherit;color:inherit}
+input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);margin:4px 0 12px}
+input:disabled,textarea:disabled,select:disabled{opacity:.55}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+label{font-size:14px;color:var(--mut)}
+label i{color:var(--err);font-style:normal}
+button{border:0;border-radius:8px;padding:12px 16px;background:var(--pri);color:#fff;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6}
+@media(prefers-color-scheme:dark){button{color:#06201d}}
+button.ghost{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+button.del{background:var(--err);color:#fff}
+header button{background:transparent;color:inherit;border:1px solid currentColor;padding:6px 12px}
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));background:var(--acc);color:#14282a;box-shadow:0 2px 8px #0004;padding:14px 20px;border-radius:28px}
+.item{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:8px;margin:8px 0;overflow:hidden}
+.head{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer}
+.hl{flex:1;min-width:0}
+.hl b{display:block;font-size:19px;letter-spacing:.5px}
+.dt{display:block;color:var(--mut);font-size:12px;line-height:1.35}
+.head button{padding:6px 12px;font-size:14px;white-space:nowrap}
+.detail{display:none;padding:4px 12px 12px;border-top:1px solid var(--line)}
+.item.open .detail{display:block}
+.detail small{color:var(--mut);display:block}
+.tag{display:inline-block;padding:1px 10px;border-radius:12px;background:var(--acc);color:#14282a;font-size:13px;font-weight:600}
+.note{margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row>*{flex:1;text-align:center;text-decoration:none}
+a.btn{display:block;padding:10px;border:1px solid var(--pri);border-radius:8px;color:var(--pri);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.chips:empty{display:none}
+.chips button{padding:6px 12px;font-size:14px;font-weight:500;border-radius:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#msg{color:var(--err);min-height:1.5em;margin:0 0 8px}
+.empty{color:var(--mut);text-align:center;padding:32px 0}
+</style>
 </head>
 <body>
-  <h2>บันทึกข้อความ</h2>
+<div id="bar"></div>
+<header><div><h1>CMTabSystem</h1><span>Customer Maintenance Table</span></div><button id="out" class="hide">ออก</button></header>
+<main>
+<p id="msg" role="alert"></p>
 
-  <textarea id="text" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
-  <button id="saveBtn">บันทึก</button>
-  <span id="status"></span>
+<section id="vLogin">
+  <label for="u">ชื่อผู้ใช้</label><input id="u" autocomplete="username" autocapitalize="none">
+  <label for="p">PIN</label><input id="p" type="password" inputmode="numeric" autocomplete="current-password">
+  <button id="go" style="width:100%">เข้าสู่ระบบ</button>
+</section>
 
-  <h3>รายการทั้งหมด</h3>
-  <div id="list">กำลังโหลด...</div>
+<section id="vList" class="hide">
+  <input id="q" type="search" placeholder="ค้นหา Internet No. / Phone / Drum / SP / Pain point" aria-label="ค้นหา">
+  <div id="items"></div>
+  <button id="add" class="fab">+ เพิ่มข้อมูล</button>
+</section>
 
-  <script>
-    // ใส่ Web app URL จากขั้นที่ 3 ตรงนี้ (ระหว่างเครื่องหมายคำพูด)
-    const API = 'https://script.google.com/macros/s/AKfycby2EzKBof1Gqdmtlotc1fEPqaobo-lCXudur0AiA4UPlL4EnDjCteh1EXqkGhQWd8E3sA/exec';
+<section id="vForm" class="hide">
+  <input type="hidden" id="id">
+  <label for="net">Internet No. <i>*</i> (ขึ้นต้น 888 หรือ 880)</label>
+  <input id="net" inputmode="numeric" maxlength="30" autocomplete="off">
+  <label for="tel">Phone No.</label>
+  <input id="tel" type="tel" inputmode="tel" maxlength="20" autocomplete="off">
+  <label for="pin">Home Pin (จิ้มจับพิกัด หรือวาง lat,lng)</label>
+  <input id="pin" inputmode="text" placeholder="13.756331,100.501762" autocomplete="off">
+  <button id="gps" type="button" class="ghost" style="width:100%;margin:-4px 0 12px">จิ้มจับพิกัดปัจจุบัน</button>
+  <label for="pain">Pain point (จิ้มเลือก หรือพิมพ์เอง)</label>
+  <input id="pain" maxlength="100" autocomplete="off">
+  <div class="chips" id="chips"></div>
+  <label for="drum">Drum No. (Line Type) (จิ้มเลือก หรือพิมพ์เอง)</label>
+  <input id="drum" maxlength="60" autocomplete="off">
+  <div class="chips" id="drumChips"></div>
+  <label for="sp">SP Code (Splitter Alias)</label><input id="sp" maxlength="60" autocomplete="off">
+  <label for="plate">Name Plate</label>
+  <select id="plate"><option value="">ไม่ระบุ</option><option value="มี">มี</option><option value="ไม่มี">ไม่มี</option></select>
+  <label for="note">Drop Details (หมายเหตุ)</label>
+  <textarea id="note" rows="9" maxlength="2000"></textarea>
+  <div class="two"><button id="cancel" class="ghost">ยกเลิก</button><button id="save">บันทึก</button></div>
+</section>
+</main>
 
-    const textBox = document.getElementById('text');
-    const saveBtn = document.getElementById('saveBtn');
-    const statusEl = document.getElementById('status');
-    const listEl = document.getElementById('list');
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyBriSISb1kM9tuLvEmXhCNqQn-Dw-ZyEZ-oBOYr8rCmNSfCU0FvdVknxT323EktpoK/exec';
+const PAINS = ['สัญญาณขาด','เน็ตช้า','หลุดบ่อย','สายขาด','สายหัก/งอ','ไฟ LOS แดง','อุปกรณ์เสีย','อื่นๆ'];
+const DRUMS = [];   // ตัวเลือก Drum ตายตัว เช่น ['Drop 1C','Drop 2C'] (ปล่อยว่างได้ ระบบจะเรียนรู้จากข้อมูลที่บันทึกไว้)
+const TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* '2026-10-08 14:30' → '8 ต.ค. 69 14:30' (พ.ศ. 2 หลัก) */
+function fd(s){
+  const m = /^(\d{4})-(\d\d)-(\d\d)[ T](\d\d:\d\d)/.exec(String(s || ''));
+  return m ? `${+m[3]} ${TH[+m[2] - 1]} ${String((+m[1] + 543) % 100).padStart(2, '0')} ${m[4]}` : String(s || '');
+}
+let token = sessionStorage.getItem('t'), me = JSON.parse(sessionStorage.getItem('u') || 'null');
+let rows = [], seq = 0, timer, pending = 0, formSeq = 0;
+const SLOW = 'กำลังเชื่อมต่อ… ครั้งแรกอาจใช้เวลาสักครู่';
 
-    // ดึงข้อมูลจาก Sheet มาแสดง
-    async function loadData() {
-      try {
-        const res = await fetch(API);
-        const data = await res.json();
-        listEl.innerHTML = '';
+function view(v){ ['vLogin','vList','vForm'].forEach(x => $(x).classList.toggle('hide', x !== v)); $('out').classList.toggle('hide', v === 'vLogin'); }
+function say(t){ $('msg').textContent = t || ''; }
 
-        if (data.length === 0) {
-          listEl.textContent = 'ยังไม่มีข้อมูล';
-          return;
-        }
+async function api(action, data = {}){
+  pending++; $('bar').classList.add('on');
+  const slow = setTimeout(() => { if (!$('msg').textContent) say(SLOW); }, 3000);
+  try{
+    const r = await fetch(API, {method:'POST', body: JSON.stringify({action, token, ...data})});
+    const j = await r.json();
+    if (j.auth) logout(j.error);
+    return j;
+  }catch(e){ return {ok:false, error:'เชื่อมต่อไม่ได้ ตรวจสอบสัญญาณแล้วลองใหม่'}; }
+  finally{
+    clearTimeout(slow); if ($('msg').textContent === SLOW) say();
+    if (--pending <= 0) { pending = 0; $('bar').classList.remove('on'); }
+  }
+}
 
-        data.reverse().forEach(r => {
-          const item = document.createElement('div');
-          item.className = 'item';
+function ping(){ fetch(API, {method:'POST', body:'{"action":"ping"}'}).catch(() => {}); }
+setInterval(() => { if (!document.hidden) ping(); }, 240000);
 
-          const time = document.createElement('div');
-          time.className = 'time';
-          time.textContent = new Date(r.time).toLocaleString('th-TH');
+async function busy(b, txt, fn){
+  const old = b.textContent; b.disabled = true; b.textContent = txt;
+  try{ return await fn(); } finally { b.disabled = false; b.textContent = old; }
+}
 
-          const text = document.createElement('div');
-          text.className = 'text';
-          text.textContent = r.text;
+function logout(m){ token = null; me = null; rows = []; sessionStorage.clear(); $('p').value = ''; $('q').value = ''; $('items').innerHTML = ''; view('vLogin'); say(m); }
 
-          item.append(time, text);
-          listEl.appendChild(item);
-        });
-      } catch (err) {
-        listEl.textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + err.message;
-      }
-    }
+$('go').onclick = () => busy($('go'), 'กำลังเข้าสู่ระบบ…', async () => {
+  say();
+  const j = await api('login', {user: $('u').value, pin: $('p').value});
+  $('p').value = '';
+  if (!j.ok) return say(j.error);
+  token = j.token; me = j.user; rows = j.rows || [];
+  sessionStorage.setItem('t', token); sessionStorage.setItem('u', JSON.stringify(me));
+  view('vList'); draw();
+});
+$('out').onclick = () => logout();
 
-    // ส่งข้อความไปบันทึกลง Sheet
-    async function saveData() {
-      const text = textBox.value.trim();
-      if (!text) {
-        alert('กรุณาพิมพ์ข้อความก่อน');
-        return;
-      }
+async function load(quiet){
+  view('vList'); say(); const my = ++seq;
+  if (!quiet) $('items').innerHTML = '<p class="empty">กำลังโหลด…</p>';
+  const j = await api('list', {q: $('q').value});
+  if (my !== seq) return;
+  if (!j.ok) { $('items').innerHTML = ''; return say(j.error); }
+  rows = j.rows; draw();
+}
+$('q').oninput = () => { clearTimeout(timer); timer = setTimeout(() => load(true), 400); };
 
-      saveBtn.disabled = true;
-      statusEl.textContent = 'กำลังบันทึก...';
+function mapLink(pin){
+  const [la, ln] = String(pin).split(',').map(Number);
+  return isFinite(la) && isFinite(ln) && pin ? `https://www.google.com/maps/search/?api=1&amp;query=${la},${ln}` : '';
+}
 
-      try {
-        await fetch(API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ text: text })
-        });
-        textBox.value = '';
-        statusEl.textContent = 'บันทึกแล้ว ✓';
-        await loadData();
-      } catch (err) {
-        statusEl.textContent = 'บันทึกไม่สำเร็จ: ' + err.message;
-      }
+function draw(){
+  $('items').innerHTML = rows.length ? rows.map(r => {
+    const m = mapLink(r.pin);
+    const dates = 'บันทึก ' + fd(r.at) + (r.upAt ? ' · แก้ไข ' + fd(r.upAt) : '');
+    return `<div class="item" data-id="${esc(r.id)}">
+      <div class="head" data-a="tog">
+        <div class="hl"><b>${esc(r.net)}</b><span class="dt">${esc(dates)}</span></div>
+        <button type="button" class="ghost" data-a="tog" aria-expanded="false">รายละเอียด ▾</button>
+      </div>
+      <div class="detail">
+        ${r.pain ? `<p style="margin:8px 0 4px"><span class="tag">${esc(r.pain)}</span></p>` : ''}
+        <small>Phone: ${esc(r.tel) || '-'}</small>
+        <small>Drum: ${esc(r.drum) || '-'}</small>
+        <small>SP: ${esc(r.sp) || '-'}</small>
+        <small>Name Plate: ${esc(r.plate) || '-'}</small>
+        ${r.note ? `<p class="note">${esc(r.note)}</p>` : ''}
+        <small>บันทึกโดย ${esc(r.by)}${r.upBy ? ' · แก้ไขล่าสุดโดย ' + esc(r.upBy) : ''}</small>
+        <div class="row">
+          ${m ? `<a class="btn" target="_blank" rel="noopener noreferrer" href="${m}">นำทาง</a>` : ''}
+          <button class="ghost" data-a="edit">แก้ไข</button>
+          ${me && me.role === 'admin' ? '<button class="del" data-a="del">ลบ</button>' : ''}
+        </div>
+      </div></div>`;
+  }).join('') : '<p class="empty">ไม่พบข้อมูล กด “เพิ่มข้อมูล” เพื่อเริ่มบันทึก</p>';
+}
 
-      saveBtn.disabled = false;
-    }
+function setOpen(el, on){
+  el.classList.toggle('open', on);
+  const b = el.querySelector('.head button');
+  b.textContent = on ? 'ซ่อน ▴' : 'รายละเอียด ▾';
+  b.setAttribute('aria-expanded', on);
+}
+function toggle(el){
+  const on = !el.classList.contains('open');
+  document.querySelectorAll('.item.open').forEach(x => setOpen(x, false));
+  if (on) { setOpen(el, true); el.scrollIntoView({block:'nearest'}); }
+}
 
-    saveBtn.addEventListener('click', saveData);
-    loadData(); // โหลดข้อมูลทันทีที่เปิดหน้าเว็บ
-  </script>
+const F = ['net','tel','pin','pain','drum','sp','plate','note'];
+function lock(on){ F.forEach(k => $(k).disabled = on); $('save').disabled = on; $('gps').disabled = on; }
+function fill(r){ F.forEach(k => $(k).value = r[k] ?? ''); }
+
+function openForm(r){
+  say(); formSeq++; $('id').value = r ? r.id : '';
+  fill(r || {}); lock(false); drawDrumChips(); view('vForm'); window.scrollTo(0, 0);
+  if (!r) $('net').focus();
+}
+
+$('items').onclick = async e => {
+  const b = e.target.closest('[data-a]'); if (!b) return;
+  const el = b.closest('.item'), id = el.dataset.id, r = rows.find(x => x.id === id); if (!r) return;
+  if (b.dataset.a === 'tog') return toggle(el);
+  if (b.dataset.a === 'edit') {
+    openForm(); const my = formSeq;
+    $('id').value = id; lock(true); say('กำลังโหลดข้อมูล…');
+    const j = await api('get', {id});
+    if (my !== formSeq) return;
+    if (!j.ok) { view('vList'); return say(j.error); }
+    fill(j.rec); lock(false); say();
+    return;
+  }
+  if (b.dataset.a === 'del' && confirm('ลบรายการ ' + r.net + ' (บันทึก ' + fd(r.at) + ') ถาวรหรือไม่?')) {
+    busy(b, 'กำลังลบ…', async () => {
+      const j = await api('remove', {id});
+      if (j.ok) { rows = rows.filter(x => x.id !== id); draw(); } else say(j.error);
+    });
+  }
+};
+
+/* ปุ่มจิ้มเลือก */
+function chips(box, list){ $(box).innerHTML = list.map(p => `<button type="button" class="ghost">${esc(p)}</button>`).join(''); }
+function wire(box, input){ $(box).onclick = e => { const b = e.target.closest('button'); if (b) $(input).value = b.textContent; }; }
+chips('chips', PAINS); wire('chips', 'pain'); wire('drumChips', 'drum');
+
+/* Drum: ตัวเลือกตายตัว + ค่าที่ใช้บ่อยที่สุด 8 ค่าจากรายการที่โหลดอยู่ */
+function drawDrumChips(){
+  const c = {};
+  rows.forEach(r => { if (r.drum) c[r.drum] = (c[r.drum] || 0) + 1; });
+  const auto = Object.keys(c).sort((a, b) => c[b] - c[a]).slice(0, 8);
+  chips('drumChips', [...new Set([...DRUMS, ...auto])]);
+}
+
+$('add').onclick = () => openForm();
+$('cancel').onclick = () => { formSeq++; say(); view('vList'); };
+
+$('gps').onclick = () => {
+  if (!navigator.geolocation) return say('เครื่องนี้ไม่รองรับ GPS');
+  const b = $('gps'), old = b.textContent; b.disabled = true; b.textContent = 'กำลังจับพิกัด…'; say();
+  navigator.geolocation.getCurrentPosition(p => {
+    b.disabled = false; b.textContent = old;
+    $('pin').value = p.coords.latitude.toFixed(6) + ',' + p.coords.longitude.toFixed(6);
+    say(p.coords.accuracy > 50 ? 'ความแม่นยำ ±' + Math.round(p.coords.accuracy) + ' ม. ลองจับใหม่กลางแจ้ง' : '');
+  }, () => { b.disabled = false; b.textContent = old; say('จับพิกัดไม่ได้ ตรวจสอบสิทธิ์ตำแหน่งของเบราว์เซอร์'); },
+  {enableHighAccuracy:true, timeout:15000});
+};
+
+function upsert(item){
+  const i = rows.findIndex(x => x.id === item.id);
+  if (i >= 0) rows[i] = item; else rows.unshift(item);
+}
+
+$('save').onclick = () => busy($('save'), 'กำลังบันทึก…', async () => {
+  say();
+  const rec = {id: $('id').value}; F.forEach(k => rec[k] = $(k).value.trim());
+  if (!/^(888|880)\d+$/.test(rec.net)) return say('Internet No. ต้องเป็นตัวเลขและขึ้นต้นด้วย 888 หรือ 880');
+  let j = await api('save', {rec});
+  if (j.dup) {
+    if (confirm('มี Internet No. นี้อยู่แล้ว\nกด OK = อัปเดตรายการล่าสุดของเลขนี้\nกด Cancel = เลือกเพิ่มเป็นรายการใหม่')) {
+      j = await api('save', {rec: {...rec, id: j.id}});
+    } else if (confirm('เพิ่มเป็นรายการใหม่ (Internet No. ซ้ำกับรายการเดิม) ใช่หรือไม่?')) {
+      j = await api('save', {rec: {...rec, force: true}});
+    } else return;
+  }
+  if (!j.ok) return say(j.error);
+  upsert(j.item); formSeq++; view('vList'); draw(); window.scrollTo(0, 0);
+});
+
+if (token && me) load(); else { view('vLogin'); ping(); }
+</script>
 </body>
 </html>
